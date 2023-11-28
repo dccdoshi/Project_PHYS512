@@ -30,12 +30,13 @@ class TransitTimingVariations():
         self.TTVs = 'empty'
         
 
-    def compute_MTTs(self,plotfig=True):
+    def compute_MTTs(self,plotfig=True,method="index"):
         '''
         This function computes the mid-transit times (MTTs) of each transit by finding the middle index of each transit.
         
         INPUT:
         plotfig => set to False if you don't want the function to plot the MTT plot after computing them.
+        method => which method to use to extract mid-transit times.
 
         OUTPUTS:
         MTTs => numpy array of the mid transit times, in *seconds*
@@ -51,28 +52,55 @@ class TransitTimingVariations():
         n, m = np.shape(final)
         MTTs = np.zeros(m//2) # there are 2 columns per transit, 1 with the original index, and one with the lightcurve values
         
-        for i in range(0,m,2):
-            dip_inds = final.iloc[:,i] # get transit indices
-            dipstart = dip_inds.iloc[0] # start of the transit
-            
-            endind = -1
-            dipend = dip_inds.iloc[endind] # end of the transit
-            while np.isnan(dipend):
-                # accounts for transits that are a couple datapoints shorter than others
-                endind -= 1
-                dipend = dip_inds.iloc[endind]
+        if method == "interpolate":
+            # Alternate method, interpolation
+            for i in range(0,m,2):
+                dip_inds = final.iloc[:,i] # get transit indices
+                dipstart = dip_inds.iloc[0] + 1 # index of start of transit (we take the point right before the flux starts to be blocked)
+                
+                endind = -1
+                dipend = dip_inds.iloc[endind] # index of end of transit
+                while np.isnan(dipend):
+                    # accounts for transits that are a couple datapoints shorter than others
+                    endind -= 1
+                    dipend = dip_inds.iloc[endind]
 
-            dipmid = (dipend+dipstart)//2 # mid-transit *index*
-            dipmidalt1 = dipmid + 1
-            dipmidalt2 = dipmid - 1
-            dipmidalts = np.array([dipmid,dipmidalt1,dipmidalt2]) # exploring alternate midtimes in case the truncation selected wrong index
-            lh = abs(dipmidalts-dipstart)
-            rh = abs(dipmidalts-dipstart)
-            diffs = abs(lh - rh)
-            truemid_ind = np.argmin(diffs)
-            truemid = dipmidalts[truemid_ind] # for most of the data, the initial dipmid ends up being the best estimate of the MTT
+                dipend += 1 # (we take the point right after the last point where there is blocked flux)
 
-            MTTs[i//2] = int(truemid)*self.dt # index*dt gives the true MTT in *seconds*
+                dipmid = (dipend+dipstart)/2 * self.dt # MTT, "index"*dt gives the true MTT in *seconds*
+
+                MTTs[i//2] = dipmid
+        
+        elif method == "index":
+            # middle index method
+            for i in range(0,m,2):
+                dip_inds = final.iloc[:,i] # get transit indices
+                dipstart = dip_inds.iloc[0] - 1 # start of the transit
+
+                endind = -1
+                dipend = dip_inds.iloc[endind] # end of the transit
+                while np.isnan(dipend):
+                    # accounts for transits that are a couple datapoints shorter than others
+                    endind -= 1
+                    dipend = dip_inds.iloc[endind]
+                    
+                dipend += 1
+
+                dipmid = (dipend+dipstart)//2 # mid-transit *index*
+                dipmidalt1 = dipmid + 1
+                dipmidalt2 = dipmid - 1
+                dipmidalts = np.array([dipmid,dipmidalt1,dipmidalt2]) # exploring alternate midtimes in case the truncation selected wrong index
+                lh = abs(dipmidalts-dipstart)
+                rh = abs(dipmidalts-dipend)
+                diffs = abs(lh - rh)
+                truemid_ind = np.argmin(diffs)
+                truemid = dipmidalts[truemid_ind] # for most of the data, the initial dipmid ends up being the best estimate of the MTT
+
+                MTTs[i//2] = int(truemid)*self.dt # index*dt gives the true MTT in *seconds*
+        
+        else: 
+            raise ValueError("MTT extraction method must be either 'interpolate' or 'index'.")
+        
             
         self.MTTs = MTTs[1:] # discard the first one as it may have started before the simulation starts
         
@@ -86,13 +114,14 @@ class TransitTimingVariations():
         return self.MTTs
 
 
-    def compute_TTVs(self,plotfig=True,plot_time_units="s"):
+    def compute_TTVs(self,plotfig=True,plot_time_units="s",method="index"):
         '''
         This function computes TTVs from the MTTs. Uses scipy.optimize.curve_fit for linear fitting
         
         INPUTS:
         plotfig => set to False if you don't want the function to plot the MTT plot after computing them.
         plot_time_units => what units you want the TTV plot to be in. Must be "s" or "hrs".
+        method => which method to use to extract mid-transit times.
 
         OUTPUT:
         TTVs => numpy array of the transit timing variations, in *seconds*.
@@ -102,7 +131,7 @@ class TransitTimingVariations():
         
         # Check if the MTTs have been computed
         if type(self.MTTs) == str:
-            MTTs = compute_MTTs(plotfig=False)
+            MTTs = compute_MTTs(plotfig=False,method=method)
         
         tnum = range(len(self.MTTs)) # transit number array
         
