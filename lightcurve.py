@@ -15,6 +15,7 @@ class LightCurve():
         radii_objects => numpy array of the radii of the objects in the simulation in the same order as the simulation
         rad_unit => string that defines the unit for radii (can only be REarth or m)
         dist_unit => string that defines the unit used for distance in the simulation (can only be AU or m)
+        xgrid => array for the time
         '''
         self.R = radii_objects
 
