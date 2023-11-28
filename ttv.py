@@ -57,8 +57,12 @@ class TransitTimingVariations():
             # Alternate method, interpolation
             for i in range(0,m,2):
                 dip_inds = final.iloc[:,i] # get transit indices
-                dipstart = dip_inds.iloc[0] + 1 # index of start of transit (we take the point right before the flux starts to be blocked)
-                
+
+                if i==0:
+                    dipstart = dip_inds.iloc[0]   # index of start of transit (we take the point right before the flux starts to be blocked)
+                else:
+                    dipstart = dip_inds.iloc[0]-1
+
                 endind = -1
                 dipend = dip_inds.iloc[endind] # index of end of transit
                 while np.isnan(dipend):
@@ -67,9 +71,7 @@ class TransitTimingVariations():
                     dipend = dip_inds.iloc[endind]
 
                 dipend += 1 # (we take the point right after the last point where there is blocked flux)
-
-                dipmid = (dipend+dipstart)/2 # MTT, "index"*dt gives the true MTT in *seconds*
-                midtime = self.time[dipmid]
+                midtime = (self.time[dipend]+self.time[dipstart])/2 # MTT, "index"*dt gives the true MTT in *seconds*
                 MTTs[i//2] = midtime
         
         elif method == "index":
