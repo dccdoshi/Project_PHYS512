@@ -8,13 +8,14 @@ import matplotlib.pylab as plt
 
 class LightCurve():
 
-    def __init__(self,radii_objects,rad_unit,dist_unit) -> None:
+    def __init__(self,radii_objects,rad_unit,dist_unit,xgrid) -> None:
         '''
         To initialize the lightcurve code you need to provide the following variables
 
         radii_objects => numpy array of the radii of the objects in the simulation in the same order as the simulation
         rad_unit => string that defines the unit for radii (can only be REarth or m)
         dist_unit => string that defines the unit used for distance in the simulation (can only be AU or m)
+        xgrid => array for the time
         '''
         self.R = radii_objects
 
@@ -32,6 +33,8 @@ class LightCurve():
             pass
         else:
             raise ValueError("dis_unit must be 'AU' or 'm'")
+
+        self.time = xgrid
         
         pass
 
@@ -66,7 +69,7 @@ class LightCurve():
         objects = {}
         for i in range(len(names)):
 
-            df = pd.DataFrame({"X":x[:,i],"Y":y[:,i]})
+            df = pd.DataFrame({"Time":self.time,"X":x[:,i],"Y":y[:,i]})
             objects[names[i]] = df
 
 
@@ -149,7 +152,7 @@ class LightCurve():
         fig, axs = plt.subplots(len(objects)-1,1,figsize=(sizex,sizey),sharex=True)
 
         for i in range(0,len(names)):
-            axs[i].scatter(range(len(objects[names[i]]["BlockedFlux"].iloc[start:end])),1-objects[names[i]]["BlockedFlux"].iloc[start:end],
+            axs[i].scatter(objects["Time"].iloc[start:end],1-objects[names[i]]["BlockedFlux"].iloc[start:end],
                             s=8,c="blue",alpha=0.7,label=names[i])
             axs[i].set_ylabel("Relative Flux")
             axs[i].legend(loc="lower right")
