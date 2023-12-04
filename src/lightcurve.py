@@ -152,7 +152,7 @@ class LightCurve():
         fig, axs = plt.subplots(len(objects)-1,1,figsize=(sizex,sizey),sharex=True)
 
         for i in range(0,len(names)):
-            axs[i].scatter(objects["Time"].iloc[start:end],1-objects[names[i]]["BlockedFlux"].iloc[start:end],
+            axs[i].scatter(objects[names[i]]["Time"].iloc[start:end],1-objects[names[i]]["BlockedFlux"].iloc[start:end],
                             s=8,c="blue",alpha=0.7,label=names[i])
             axs[i].set_ylabel("Relative Flux")
             axs[i].legend(loc="lower right")
@@ -178,7 +178,7 @@ class LightCurve():
         '''
 
         fig, axs = plt.subplots(1,1,figsize=(sizex,sizey))
-        axs.scatter(range(len(object["BlockedFlux"].iloc[start:end])),1-object["BlockedFlux"].iloc[start:end],
+        axs.scatter(object["Time"].iloc[start:end],1-object["BlockedFlux"].iloc[start:end],
                             s=36,c="blue",alpha=0.7,label=name)
         axs.set_xlabel("Time")
         axs.set_ylabel("Relative Flux")
@@ -205,7 +205,7 @@ class LightCurve():
             total_blocked_flux += objects[names[i]]["BlockedFlux"].iloc[start:end].values
 
         fig, axs = plt.subplots(1,1,figsize=(sizex,sizey))
-        axs.scatter(range(len(objects[names[0]]["BlockedFlux"].iloc[start:end])),1-total_blocked_flux,
+        axs.scatter(objects[names[0]]["Time"].iloc[start:end],1-total_blocked_flux,
                             s=16,c="blue",alpha=0.7)
         axs.set_xlabel("Time")
         axs.set_ylabel("Relative Flux")

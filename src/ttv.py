@@ -180,10 +180,10 @@ class TransitTimingVariations():
             plt.rcParams.update({'font.size': text_size})
             if plot_time_units=="hrs":
                 plt.plot(tnum,self.TTVs/seconds_per_hour,ls=':',marker='+',ms=10)
-            if plot_time_units=="min":
+            elif plot_time_units=="min":
                 plt.plot(tnum,self.TTVs/seconds_per_min,ls=':',marker='+',ms=10)
                 plt.ylim((-y_lim_min,y_lim_min))
-            elif plot_time_unit=="min":
+            elif plot_time_units=="s":
                 plt.plot(tnum,self.TTVs,ls=':',marker='+',ms=10)
             else: 
                 raise ValueError("plot_time_units must be either 's', 'min' or 'hrs'.")
