@@ -117,20 +117,29 @@ class TransitTimingVariations():
         return self.MTTs
 
 
-    def compute_TTVs(self,plotfig=True,plot_time_units="s",method="index"):
+
+    def compute_TTVs(self,plotfig=True,plot_time_units="min",method="index",sizex=25,sizey=10,text_size=10,y_lim_min=20):
         '''
         This function computes TTVs from the MTTs. Uses scipy.optimize.curve_fit for linear fitting
         
         INPUTS:
         plotfig => set to False if you don't want the function to plot the MTT plot after computing them.
-        plot_time_units => what units you want the TTV plot to be in. Must be "s" or "hrs".
+
+        plot_time_units => what units you want the TTV plot to be in. Must be "s", "min" or "hrs".
         method => which method to use to extract mid-transit times.
+        sizex => the x size of the figure
+        sizey => the y size of the figure
+        text_size => the size of caption text in the figure
+        y_lim => for the "min" TTV plot only, axis limits in the y direction are set to +-y_lim
+
 
         OUTPUT:
         TTVs => numpy array of the transit timing variations, in *seconds*.
         A TTV plot if requested.
         '''
         seconds_per_hour = 60*60
+        seconds_per_min = 60
+
         
         # Check if the MTTs have been computed
         if type(self.MTTs) == str:
@@ -143,8 +152,11 @@ class TransitTimingVariations():
             return m*x + b
         
         # Perform the linear fit to MTT data
-        popt, pcov = curve_fit(linmodel,tnum,self.MTTs,sigma=[self.dt for mtt in self.MTTs]) # error is dt due to the discrete MTT selection process (no interpolation)
+        popt, pcov = curve_fit(linmodel,tnum,self.MTTs,sigma=[self.dt for mtt in self.MTTs]) # take timestep as the error
         model_rslt = linmodel(tnum,popt[0],popt[1])
+        print('slope= ',popt[0],' intercept= ',popt[1])
+        print('Errors=',np.sqrt(np.diag(pcov)))
+
         
         TTVs = self.MTTs - model_rslt # TTV is basically the residual of the MTTs linear fit (Observed-Calculated)
         self.TTVs = TTVs
@@ -152,22 +164,37 @@ class TransitTimingVariations():
         # Plot figures if requested
         if plotfig == True:
             # Plot the MTTs and fit
+
+            plt.rcParams.update({'font.size': 10})
             plt.scatter(tnum,self.MTTs,label='simulated mid-transit times')
-            plt.plot(tnum,model_rslt,ls='--',color='r',label='linear fit to MTTs')
+            plt.plot(tnum,model_rslt,ls='--',color='r',label='linear fit to MTTs, $T_o=%.1f$ s, $P=%.1f$ s'%(popt[0],popt[1]))
             plt.xlabel('Transit Number')
             plt.ylabel('Mid-transit Time [s]')
             plt.title('Mid-transit Times for '+self.name)
             plt.legend()
             plt.show()
             
-            # Plot the TTV results (basically the residuals of the MTTs
+
+            # Plot the TTV results (basically the residuals of the MTTs)
+            plt.figure(figsize=(sizex,sizey))
+            plt.rcParams.update({'font.size': text_size})
             if plot_time_units=="hrs":
                 plt.plot(tnum,self.TTVs/seconds_per_hour,ls=':',marker='+',ms=10)
-            else:
+            if plot_time_units=="min":
+                plt.plot(tnum,self.TTVs/seconds_per_min,ls=':',marker='+',ms=10)
+                plt.ylim((-y_lim_min,y_lim_min))
+            elif plot_time_unit=="min":
                 plt.plot(tnum,self.TTVs,ls=':',marker='+',ms=10)
+            else: 
+                raise ValueError("plot_time_units must be either 's', 'min' or 'hrs'.")
+            
             plt.xlabel('Transit Number')
             plt.ylabel('Observed-Calculated ['+plot_time_units+']')
             plt.title('Transit Timing Variations for '+self.name)
             plt.show()
             
+
+            plt.rcParams.update({'font.size': 10})
+            
         return self.TTVs
+
