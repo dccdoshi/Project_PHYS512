@@ -1,4 +1,6 @@
 # PHYS 512 Final Project: Calculating Transit Timing Variation Curves using N-Body Simulations
+The report for our project is in this repository as "Phys512_Project.pdf". 
+
 You will require the following Python packages to run the code in this repository: 
 ## Dependencies 
 - rebound
