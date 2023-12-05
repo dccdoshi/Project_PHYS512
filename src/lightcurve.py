@@ -212,4 +212,16 @@ class LightCurve():
         axs.set_title("Light Curve of Star from Contribution of All Planets")
         return fig
         
-    
+    def get_total_lc(self, objects,start=0,end=-1):
+        ''' 
+        JG added this function to lightcurve.py
+        Basically a copy of the code from plot_total_lc
+        '''
+         
+          # Get total blocked flux 
+        names = list(objects.keys())
+        total_blocked_flux = np.zeros(len(objects[names[0]]["BlockedFlux"].iloc[start:end]))
+        for i in range(len(names)):
+            total_blocked_flux += objects[names[i]]["BlockedFlux"].iloc[start:end].values
+
+        return 1-total_blocked_flux
